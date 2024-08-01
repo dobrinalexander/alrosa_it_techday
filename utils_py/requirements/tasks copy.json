@@ -1,0 +1,57 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "InitializeCondaInvironment",
+      "type": "shell",
+      "command": "conda",
+      "args": [
+        "init",
+        "&&",
+        "conda",
+        "create",
+        "--name",
+        "broker_info_solo",
+        "--file",
+        "utils_py/requirements/requirements.txt",
+        "-c",
+        "conda-forge"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ActivateCondaEnvironment",
+      "dependsOn": "InitializeCondaInvironment",
+      "type": "shell",
+      "command": "conda",
+      "args": [
+        "activate",
+        "broker_info_solo"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "InstallPackage",
+      "dependsOn": "ActivateCondaEnvironment",
+      "type": "shell",
+      "command": "pip",
+      "args": [
+        "install",
+        "hdfs"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

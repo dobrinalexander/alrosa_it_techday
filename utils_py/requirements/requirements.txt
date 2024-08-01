@@ -1,0 +1,4 @@
+hdfs
+loguru
+pandas
+psycopg2-binary

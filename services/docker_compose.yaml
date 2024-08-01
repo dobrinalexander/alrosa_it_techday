@@ -1,0 +1,156 @@
+version: "3.9"
+
+#TODO add db supeset
+services:
+  # POSGRES INSTANCE
+  # POSTGRES: database store core data. superset get data from here
+  postgres:
+    image: postgres:latest
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: test_db
+    volumes:
+      - ../data/pg_data:/var/lib/postgresql/data
+      - ../sql_scripts/init_db_services.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - inter-net
+
+  # START HADOOP INSTANCES
+  # --------------------------------------------------------------
+  # NAMENODE: dictionary path for files blocks datanodes (where datanodes store files)
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    ports:
+      - 9870:9870
+      - 9000:9000
+    volumes:
+      - ../data/hadoop/hadoop_namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./envs/hadoop.env
+    networks:
+      - inter-net
+
+  # DATANODE: main storage instances. store files blocks
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode
+    hostname: datanode #localhost #failed next containers localhost
+    ports:
+      - 9864:9864
+    restart: always
+    volumes:
+      - ../data/hadoop/hadoop_datanode:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./envs/hadoop.env
+    depends_on:
+      - namenode
+    networks:
+      - inter-net
+  # END HADOOP INSTANCES
+  # --------------------------------------------------------------
+
+  # SUPERSET INSTANCE
+  # SUPERSET: server makes dashboards
+  #TODO: dashboard... need load from db
+  superset:
+    image: apache/superset
+    container_name: superset
+    ports:
+      - 8089:8088
+    environment:
+      - SUPERSET_LOAD_EXAMPLES=no
+      - SUPERSET_SECRET_KEY=KJLBSF8
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=admin
+      - SUPERSET_DATABASE_URI=postgresql+psycopg2://admin:password@postgres:5432/superset
+    command: >
+      sh -c '
+        superset fab create-admin \
+          --username admin \
+          --password admin \
+          --email admin@superset.com \
+          --firstname Superset \
+          --lastname Admin && \
+        superset db upgrade && \
+        superset init && \
+        /usr/bin/run-server.sh'
+    depends_on:
+      - postgres
+    volumes:
+      - ../data/superset_data:/app/superset_home
+    networks:
+      - inter-net
+  # export DATABASE_URL=postgresql+psycopg2://admin:password@postgres:5432/superset
+
+  # START AIRFLOW INSTANCES
+  # WEBSERVER AIRFLOW: service for manage run DAGS and config some parameters for run DAGS
+  # --------------------------------------------------------------
+  webserver_airflow:
+    image: apache/airflow:latest
+    entrypoint: /bin/bash
+    ports:
+      - 8080:8080
+    environment:
+      - LOAD_EX=n
+      - EXECUTOR=Local
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://admin:password@postgres:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY=KJLBSF8
+      - AIRFLOW__ADMIN_USER=admin
+      - AIRFLOW__ADMIN_PASSWORD=admin
+      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
+      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG_FILE=True
+      - SERVICE_PRECONDITION=postgres:5432
+    command: -c "pip install -r /opt/airflow/dags/utils_py/requirements/requirements.txt &&  \
+      airflow db migrate && \
+      airflow users create \
+        --username admin \
+        --firstname admin \
+        --lastname admin \
+        --role Admin \
+        --email $AIRFLOW__ADMIN_USER@admin.com \
+        --password admin && \
+      airflow webserver"
+    depends_on:
+      - postgres
+    volumes:
+      - ../data/airflow_data/airflow_db:/opt/airflow
+      - ../utils_py:/opt/airflow/dags/utils_py
+      - ../config.json:/opt/airflow/dags/config_dag/config.json
+    networks:
+      - inter-net
+
+  # SCHEDULER AIRFLOW: daemon for start DAG by time and manual runs
+  scheduler_airflow:
+    image: apache/airflow:latest
+    entrypoint: /bin/bash
+    environment:
+      - LOAD_EX=n
+      - EXECUTOR=Local
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://admin:password@postgres:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY=KJLBSF8
+      - SERVICE_PRECONDITION=webserver_airflow:9870
+    command: 
+      -c "pip install -r /opt/airflow/dags/utils_py/requirements/requirements.txt && airflow scheduler"
+    depends_on:
+      - webserver_airflow
+      - postgres
+    volumes:
+      - ../data/airflow_data/airflow_db:/opt/airflow
+      - ../utils_py:/opt/airflow/dags/utils_py
+      - ../config.json:/opt/airflow/dags/config_dag/config.json
+    networks:
+      - inter-net
+  # END AIRLOFW INSTANCES
+  # --------------------------------------------------------------
+
+networks:
+  inter-net:
+    driver: bridge

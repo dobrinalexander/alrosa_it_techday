@@ -1,0 +1,15 @@
+{
+    "postgres": {
+        "dbname": "test_db",
+        "user": "admin",
+        "host": "postgres",
+        "password": "password",
+        "path_init_sql":"sql_scripts/init_script.sql",
+        "init_db": false,
+        "load_core_data":true
+    },
+    "hdfs": {
+        "hdfs_host": "http://namenode:9870",
+        "load_raw_data":true
+    }
+}
