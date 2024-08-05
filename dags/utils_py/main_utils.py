@@ -5,12 +5,11 @@ import json
 
 from utils_py.preprocssing_data_utils import prepare_data_to_insert
 
-def load_raw_data(hdfs_conn, api_pulse_conn, config):
+def load_raw_data(hdfs_conn, config):
     if config["hdfs"]["load_raw_data"] == True:
-        for ticker in config["api_pulse"]["ticker_list"]:
+        for ticker in config["data_conf"]["ticker_list"]:
 
             logger.info(ticker)
-            max_cursor = config["api_pulse"]["max_cursor"]
 
             # make dir in HDFS
             dir_hdfs_ticker = f"/data_pulse_api/{ticker}"
@@ -36,7 +35,7 @@ def load_raw_data(hdfs_conn, api_pulse_conn, config):
 
 def load_core_data(hdfs_conn, pg_conn, config):
     if config["postgres"]["load_core_data"] == True:
-        for ticker in config["api_pulse"]["ticker_list"]:
+        for ticker in config["data_conf"]["ticker_list"]:
 
             # list HDFS files in dir
             list_files = hdfs_conn.list_files(f"""/data_pulse_api/{ticker}""")

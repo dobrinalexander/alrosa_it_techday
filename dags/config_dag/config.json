@@ -4,12 +4,15 @@
         "user": "admin",
         "host": "postgres",
         "password": "password",
-        "path_init_sql":"sql_scripts/init_script.sql",
-        "init_db": false,
+        "path_init_sql":"/opt/airflow/dags/utils_py/pg_sql_scripts/init_script.sql",
+        "init_db": true,
         "load_core_data":true
     },
     "hdfs": {
         "hdfs_host": "http://namenode:9870",
         "load_raw_data":true
+    },
+    "data_conf":{
+        "ticker_list": ["SBER"]
     }
 }

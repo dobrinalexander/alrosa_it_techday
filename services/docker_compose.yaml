@@ -102,7 +102,7 @@ services:
       - LOAD_EX=n
       - EXECUTOR=Local
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://admin:password@postgres:5432/airflow
-      - AIRFLOW__CORE__FERNET_KEY=KJLBSF8
+      - AIRFLOW__CORE__FERNET_KEY=enzmZQhK4UAEJERYsDutCQafPTqRyjW8_i5Ww0gBbe8=
       - AIRFLOW__ADMIN_USER=admin
       - AIRFLOW__ADMIN_PASSWORD=admin
       - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
@@ -122,10 +122,11 @@ services:
       - postgres
     volumes:
       - ../data/airflow_data/airflow_db:/opt/airflow
-      - ../utils_py:/opt/airflow/dags/utils_py
-      - ../config.json:/opt/airflow/dags/config_dag/config.json
+      - ../dags:/opt/airflow/dags
+      - ../data/data_samples:/opt/airflow/airflow_data/data_samples
     networks:
       - inter-net
+      
 
   # SCHEDULER AIRFLOW: daemon for start DAG by time and manual runs
   scheduler_airflow:
@@ -135,7 +136,7 @@ services:
       - LOAD_EX=n
       - EXECUTOR=Local
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://admin:password@postgres:5432/airflow
-      - AIRFLOW__CORE__FERNET_KEY=KJLBSF8
+      - AIRFLOW__CORE__FERNET_KEY=enzmZQhK4UAEJERYsDutCQafPTqRyjW8_i5Ww0gBbe8=
       - SERVICE_PRECONDITION=webserver_airflow:9870
     command: 
       -c "pip install -r /opt/airflow/dags/utils_py/requirements/requirements.txt && airflow scheduler"
@@ -144,8 +145,8 @@ services:
       - postgres
     volumes:
       - ../data/airflow_data/airflow_db:/opt/airflow
-      - ../utils_py:/opt/airflow/dags/utils_py
-      - ../config.json:/opt/airflow/dags/config_dag/config.json
+      - ../dags:/opt/airflow/dags
+      - ../data/data_samples:/opt/airflow/airflow_data/data_samples
     networks:
       - inter-net
   # END AIRLOFW INSTANCES
