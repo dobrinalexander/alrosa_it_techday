@@ -30,12 +30,13 @@ Workshop для ивента TechDay
 
 Для корректной работы нужно настроить подключения к БД Postgres в airlfow.
 Настройка подключения Postgres в Airflow:
-![alt text](images_readme/postgres_conn_air.png)
+![alt text](images_readme/postgress_conn_air.png)
 
 
 ## Запишем данные в raw и core слой:
 
 Сначала необходимо скачать тестовые данные, которые мы будем записывать:
+https://disk.yandex.ru/d/xpmErzk_APjmrg
 
 Нужно разархивировать их и поместить по пути alrosa_it_techday/data/data_samples
 
